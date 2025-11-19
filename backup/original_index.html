@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RenoHome - ตลาดซื้อขายบ้านรีโนเวทพร้อมอยู่</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+        }
+        .hero-pattern {
+            background-color: #3b82f6;
+            background-image: url("https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80");
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: multiply;
+        }
+        .house-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        /* Toast Animation */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        .toast.hide {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+        /* Custom Scrollbar for modals */
+        .modal-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .modal-scroll::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        .modal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <i class="fas fa-paint-roller text-blue-600 text-3xl mr-2"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800 leading-none">Reno<span class="text-blue-600">Home</span></h1>
+                        <p class="text-xs text-gray-500">บ้านรีโนเวทพร้อมอยู่</p>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#" class="text-gray-600 hover:text-blue-600 font-medium transition">หน้าแรก</a>
+                    <a href="#listings" class="text-gray-600 hover:text-blue-600 font-medium transition">ค้นหาบ้าน</a>
+                    <a href="#about" class="text-gray-600 hover:text-blue-600 font-medium transition">เกี่ยวกับเรา</a>
+                    <button onclick="openSellModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-medium transition shadow-lg flex items-center">
+                        <i class="fas fa-plus-circle mr-2"></i> ลงประกาศขายฟรี
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-pattern relative h-[500px] flex items-center justify-center text-white">
+        <div class="absolute inset-0 bg-black opacity-40"></div>
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">เปลี่ยนบ้านเก่า ให้เป็นบ้านในฝัน</h1>
+            <p class="text-xl md:text-2xl mb-8 text-gray-200 drop-shadow-md">แหล่งรวมบ้านมือสองรีโนเวทใหม่ สไตล์โมเดิร์น พร้อมเข้าอยู่ทันที</p>
+            
+            <!-- Search Bar -->
+            <div class="bg-white p-4 rounded-lg shadow-2xl max-w-3xl mx-auto flex flex-col md:flex-row gap-3 text-gray-700">
+                <div class="flex-grow relative">
+                    <i class="fas fa-map-marker-alt absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="searchInput" placeholder="ค้นหาทำเล, ชื่อโครงการ..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                </div>
+                <select id="typeFilter" class="md:w-1/4 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="all">ทุกประเภท</option>
+                    <option value="house">บ้านเดี่ยว</option>
+                    <option value="townhome">ทาวน์โฮม</option>
+                    <option value="condo">คอนโด</option>
+                </select>
+                <button onclick="filterProperties()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-md font-bold transition w-full md:w-auto">
+                    ค้นหา
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div id="listings" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        <!-- Filters & Sorting -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 md:mb-0 border-l-4 border-blue-600 pl-3">รายการบ้านล่าสุด</h2>
+            <div class="flex space-x-2">
+                <button onclick="setCategory('all')" class="filter-btn active bg-blue-600 text-white px-4 py-1 rounded-full text-sm transition">ทั้งหมด</button>
+                <button onclick="setCategory('new')" class="filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm hover:bg-gray-300 transition">มาใหม่</button>
+                <button onclick="setCategory('hot')" class="filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm hover:bg-gray-300 transition">ยอดนิยม</button>
+            </div>
+        </div>
+
+        <!-- Grid Container -->
+        <div id="propertyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Properties will be injected here by JS -->
+        </div>
+
+        <!-- No Results State -->
+        <div id="noResults" class="hidden text-center py-20">
+            <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
+            <h3 class="text-xl text-gray-500">ไม่พบข้อมูลบ้านที่คุณค้นหา</h3>
+            <button onclick="resetFilters()" class="mt-4 text-blue-600 hover:underline">ล้างคำค้นหา</button>
+        </div>
+    </div>
+
+    <!-- About / Trust Section -->
+    <div id="about" class="bg-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">ทำไมต้อง RenoHome?</h2>
+                <p class="text-gray-500">เราคัดสรรบ้านโครงสร้างดี รีโนเวทด้วยวัสดุเกรดพรีเมียม เพื่อคุณภาพชีวิตที่ดีกว่า</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="p-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">พร้อมเข้าอยู่</h3>
+                    <p class="text-gray-600">บ้านทุกหลังผ่านการตรวจสอบระบบน้ำ ไฟ และโครงสร้าง รีโนเวทเสร็จสมบูรณ์ หิ้วกระเป๋าเข้าอยู่ได้เลย</p>
+                </div>
+                <div class="p-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">ดีไซน์ทันสมัย</h3>
+                    <p class="text-gray-600">ออกแบบโดยสถาปนิกและอินทีเรียมืออาชีพ ตอบโจทย์ไลฟ์สไตล์คนรุ่นใหม่ ทั้ง Minimal, Nordic และ Loft</p>
+                </div>
+                <div class="p-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">ดูแลสินเชื่อ</h3>
+                    <p class="text-gray-600">มีทีมงานช่วยประเมินวงเงินและยื่นกู้สินเชื่อบ้านมือสองกับธนาคารพันธมิตร ฟรี!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white pt-12 pb-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h4 class="text-xl font-bold mb-4">Reno<span class="text-blue-400">Home</span></h4>
+                    <p class="text-gray-400 text-sm">ผู้นำด้านตลาดซื้อขายบ้านรีโนเวทมือสอง คุณภาพเยี่ยม ราคาสมเหตุสมผล</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">เมนูลัด</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                        <li><a href="#" class="hover:text-white">หน้าแรก</a></li>
+                        <li><a href="#" class="hover:text-white">ค้นหาบ้าน</a></li>
+                        <li><a href="#" class="hover:text-white">บทความรีโนเวท</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">ติดต่อเรา</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                        <li><i class="fas fa-phone mr-2"></i> 02-123-4567</li>
+                        <li><i class="fab fa-line mr-2"></i> @renohome</li>
+                        <li><i class="fas fa-envelope mr-2"></i> contact@renohome.th</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">ติดตามข่าวสาร</h4>
+                    <div class="flex gap-2">
+                        <input type="email" placeholder="อีเมลของคุณ" class="bg-gray-800 border-none rounded px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-500">
+                        <button class="bg-blue-600 px-3 py-2 rounded text-sm hover:bg-blue-700">ส่ง</button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
+                &copy; 2024 RenoHome Thailand. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- 1. Property Detail Modal -->
+    <div id="propertyModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-scroll relative shadow-2xl animate-[slideIn_0.3s_ease-out]">
+            <button onclick="closeModal()" class="absolute top-4 right-4 bg-white rounded-full p-2 text-gray-600 hover:text-red-500 transition z-10 shadow-md">
+                <i class="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
+            </button>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2">
+                <!-- Image Gallery (Mockup) -->
+                <div class="h-64 lg:h-auto bg-gray-200 relative">
+                    <img id="modalImage" src="" alt="House Image" class="w-full h-full object-cover">
+                    <span id="modalStatus" class="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded text-sm font-bold shadow">พร้อมอยู่</span>
+                </div>
+                
+                <!-- Content -->
+                <div class="p-6 lg:p-8">
+                    <div class="flex justify-between items-start mb-2">
+                        <span id="modalType" class="text-blue-600 font-medium text-sm uppercase tracking-wide">บ้านเดี่ยว</span>
+                        <span id="modalPrice" class="text-2xl font-bold text-gray-900">฿ 5,xxx,xxx</span>
+                    </div>
+                    <h2 id="modalTitle" class="text-3xl font-bold text-gray-800 mb-2">ชื่อบ้าน...</h2>
+                    <p id="modalLocation" class="text-gray-500 mb-6 flex items-center"><i class="fas fa-map-marker-alt mr-2"></i> <span>ทำเล...</span></p>
+                    
+                    <!-- Specs -->
+                    <div class="grid grid-cols-3 gap-4 mb-6 border-t border-b border-gray-100 py-4">
+                        <div class="text-center">
+                            <i class="fas fa-bed text-gray-400 mb-1 text-xl"></i>
+                            <p class="text-sm text-gray-600"><span id="modalBeds" class="font-bold text-gray-800">3</span> นอน</p>
+                        </div>
+                        <div class="text-center border-l border-r border-gray-100">
+                            <i class="fas fa-bath text-gray-400 mb-1 text-xl"></i>
+                            <p class="text-sm text-gray-600"><span id="modalBaths" class="font-bold text-gray-800">2</span> น้ำ</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-ruler-combined text-gray-400 mb-1 text-xl"></i>
+                            <p class="text-sm text-gray-600"><span id="modalArea" class="font-bold text-gray-800">150</span> ตร.ม.</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h3 class="font-bold text-gray-800 mb-2">รายละเอียดการรีโนเวท</h3>
+                        <p id="modalDesc" class="text-gray-600 text-sm leading-relaxed">
+                            รายละเอียดบ้าน...
+                        </p>
+                    </div>
+
+                    <!-- Agent Contact -->
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-3">สนใจนัดดูบ้านหลังนี้?</h3>
+                        <form onsubmit="handleContact(event)" class="space-y-3">
+                            <input type="text" placeholder="ชื่อของคุณ" required class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm">
+                            <input type="tel" placeholder="เบอร์โทรศัพท์" required class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm">
+                            <div class="flex gap-2 mt-2">
+                                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
+                                    ติดต่อผู้ขาย
+                                </button>
+                                <button type="button" class="px-4 py-2 border border-green-500 text-green-600 rounded hover:bg-green-50 transition">
+                                    <i class="fab fa-line text-xl"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sell Your House Modal (Add Listing Form) -->
+    <div id="sellModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-scroll relative shadow-2xl animate-[slideIn_0.3s_ease-out]">
+            <!-- Header -->
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">ลงประกาศขายบ้าน</h2>
+                    <p class="text-gray-500 text-sm">กรอกรายละเอียดบ้านรีโนเวทของคุณเพื่อลงขาย</p>
+                </div>
+                <button onclick="closeSellModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full p-2 hover:bg-gray-200 transition">
+                    <i class="fas fa-times w-5 h-5 flex items-center justify-center"></i>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleAddListing(event)" class="p-6 space-y-5">
+                
+                <!-- Image Upload Mockup -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">รูปภาพบ้าน (URL)</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="propImage" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" 
+                               placeholder="https://example.com/image.jpg" 
+                               value="https://images.unsplash.com/photo-151358468e774-c447475a968b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">*สำหรับเวอร์ชันทดสอบ ใส่ URL ของรูปภาพ หรือใช้ค่าเริ่มต้นที่ระบบเตรียมให้</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อประกาศ <span class="text-red-500">*</span></label>
+                        <input type="text" id="propTitle" required class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="เช่น บ้านเดี่ยวหลังมุม รีโนเวทใหม่">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ราคา (บาท) <span class="text-red-500">*</span></label>
+                        <input type="number" id="propPrice" required min="100000" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="เช่น 3500000">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ประเภท <span class="text-red-500">*</span></label>
+                        <select id="propType" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white">
+                            <option value="house">บ้านเดี่ยว</option>
+                            <option value="townhome">ทาวน์โฮม</option>
+                            <option value="condo">คอนโด</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ทำเล / เขต <span class="text-red-500">*</span></label>
+                        <input type="text" id="propLocation" required class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="เช่น บางนา, กรุงเทพฯ">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ห้องนอน</label>
+                        <input type="number" id="propBeds" required min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 text-center" value="1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ห้องน้ำ</label>
+                        <input type="number" id="propBaths" required min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 text-center" value="1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">พื้นที่ (ตร.ม.)</label>
+                        <input type="number" id="propArea" required min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 text-center" value="30">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                    <textarea id="propDesc" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500" placeholder="อธิบายจุดเด่นของบ้าน การรีโนเวท หรือของแถม..."></textarea>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-md flex justify-center items-center transform active:scale-95">
+                        <i class="fas fa-check-circle mr-2"></i> ลงประกาศทันที
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // --- Mock Data ---
+        // ใช้ var/let เพื่อให้แก้ไขได้
+        let properties = [
+            {
+                id: 1,
+                title: "ทาวน์โฮมสไตล์มินิมอล อ่อนนุช 44",
+                price: 3290000,
+                location: "อ่อนนุช, กรุงเทพฯ",
+                beds: 3,
+                baths: 2,
+                area: 120,
+                type: "townhome",
+                image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+                desc: "ทาวน์โฮมรีโนเวทใหม่ทั้งหลังสไตล์มินิมอล เดินระบบน้ำไฟใหม่หมด พื้น SPC ลายไม้ ต่อเติมครัวพร้อมเคาน์เตอร์บาร์ จอดรถในบ้านได้ 1 คัน",
+                category: "hot"
+            },
+            {
+                id: 2,
+                title: "บ้านเดี่ยว Nordic Style รามอินทรา",
+                price: 5500000,
+                location: "รามอินทรา, กรุงเทพฯ",
+                beds: 4,
+                baths: 3,
+                area: 200,
+                type: "house",
+                image: "https://images.unsplash.com/photo-1600596542815-2495db9dc2c3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+                desc: "บ้านเดี่ยวหลังมุม รีโนเวททรง Nordic เพดานสูงโปร่ง Double Volume ห้องนั่งเล่นกว้างมาก สวนรอบบ้านจัดใหม่",
+                category: "new"
+            },
+            {
+                id: 3,
+                title: "คอนโด Loft ใจกลางสุขุมวิท",
+                price: 4200000,
+                location: "สุขุมวิท 71, กรุงเทพฯ",
+                beds: 1,
+                baths: 1,
+                area: 45,
+                type: "condo",
+                image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+                desc: "คอนโดแต่ง Loft ผนังปูนเปลือยขัดมัน เฟอร์นิเจอร์บิวท์อินครบชุด วิวเมืองโล่งไม่มีตึกบัง",
+                category: "all"
+            },
+            {
+                id: 4,
+                title: "ทาวน์โฮม 2 ชั้น ลาดพร้าว-วังหิน",
+                price: 2890000,
+                location: "ลาดพร้าว, กรุงเทพฯ",
+                beds: 2,
+                baths: 2,
+                area: 110,
+                type: "townhome",
+                image: "https://images.unsplash.com/photo-1484154218962-a1c00207099b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+                desc: "ทาวน์โฮมทำเลทอง ลาดพร้าว-วังหิน รีโนเวทสไตล์โมเดิร์นโทนขาว-เทา เหมาะสำหรับครอบครัวเริ่มต้น",
+                category: "all"
+            },
+            {
+                id: 5,
+                title: "บ้านแฝดอารมณ์บ้านเดี่ยว บางนา",
+                price: 4800000,
+                location: "บางนา-ตราด, สมุทรปราการ",
+                beds: 3,
+                baths: 3,
+                area: 165,
+                type: "house",
+                image: "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+                desc: "บ้านแฝดฟังก์ชันครบ รีโนเวทใหม่พร้อมครัวไทยแยกส่วน มีพื้นที่ข้างบ้านกว้าง ใกล้ Mega Bangna",
+                category: "new"
+            },
+            {
+                id: 6,
+                title: "Studio Condo ใกล้รถไฟฟ้า",
+                price: 1950000,
+                location: "รัชดา, กรุงเทพฯ",
+                beds: 1,
+                baths: 1,
+                area: 30,
+                type: "condo",
+                image: "https://images.unsplash.com/photo-1486304873000-235643847519?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+                desc: "คอนโดรีโนเวทใหม่ สไตล์ Muji เรียบง่ายอบอุ่น พื้นที่ใช้สอยคุ้มค่า เหมาะสำหรับคนทำงานหรือปล่อยเช่า",
+                category: "hot"
+            }
+        ];
+
+        // --- State ---
+        let currentFilter = {
+            text: "",
+            type: "all",
+            category: "all"
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProperties(properties);
+            
+            // Event Listeners
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                currentFilter.text = e.target.value;
+                applyFilters();
+            });
+            
+            document.getElementById('typeFilter').addEventListener('change', (e) => {
+                currentFilter.type = e.target.value;
+                applyFilters();
+            });
+        });
+
+        // --- Functions ---
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(price);
+        }
+
+        function renderProperties(props) {
+            const grid = document.getElementById('propertyGrid');
+            const noResults = document.getElementById('noResults');
+            
+            grid.innerHTML = '';
+            
+            if (props.length === 0) {
+                grid.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            noResults.classList.add('hidden');
+
+            props.forEach(prop => {
+                const card = document.createElement('div');
+                card.className = 'house-card bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition cursor-pointer';
+                card.onclick = () => openModal(prop);
+                
+                card.innerHTML = `
+                    <div class="relative h-56">
+                        <img src="${prop.image}" alt="${prop.title}" class="w-full h-full object-cover">
+                        <div class="absolute top-3 right-3 bg-white px-2 py-1 rounded-lg shadow text-sm font-bold text-blue-600">
+                            ${prop.type === 'house' ? 'บ้านเดี่ยว' : prop.type === 'townhome' ? 'ทาวน์โฮม' : 'คอนโด'}
+                        </div>
+                        ${prop.category === 'new' ? '<div class="absolute top-3 left-3 bg-green-500 px-2 py-1 rounded-lg shadow text-sm font-bold text-white">มาใหม่</div>' : ''}
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-blue-600">${formatPrice(prop.price)}</h3>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-1 truncate">${prop.title}</h4>
+                        <p class="text-gray-500 text-sm mb-4 flex items-center"><i class="fas fa-map-marker-alt mr-1 text-xs"></i> ${prop.location}</p>
+                        
+                        <div class="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
+                            <span class="flex items-center gap-1"><i class="fas fa-bed"></i> ${prop.beds} นอน</span>
+                            <span class="flex items-center gap-1"><i class="fas fa-bath"></i> ${prop.baths} น้ำ</span>
+                            <span class="flex items-center gap-1"><i class="fas fa-ruler-combined"></i> ${prop.area} ตร.ม.</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function applyFilters() {
+            const filtered = properties.filter(prop => {
+                const matchText = prop.title.toLowerCase().includes(currentFilter.text.toLowerCase()) || 
+                                  prop.location.toLowerCase().includes(currentFilter.text.toLowerCase());
+                const matchType = currentFilter.type === 'all' || prop.type === currentFilter.type;
+                
+                let matchCategory = true;
+                if (currentFilter.category !== 'all') {
+                     matchCategory = prop.category === currentFilter.category;
+                }
+                return matchText && matchType && matchCategory;
+            });
+            renderProperties(filtered);
+        }
+
+        function filterProperties() {
+            applyFilters();
+            document.getElementById('listings').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function setCategory(cat) {
+            currentFilter.category = cat;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-600');
+            });
+            event.target.classList.remove('bg-gray-200', 'text-gray-600');
+            event.target.classList.add('bg-blue-600', 'text-white');
+            applyFilters();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('typeFilter').value = 'all';
+            currentFilter.text = '';
+            currentFilter.type = 'all';
+            applyFilters();
+        }
+
+        // --- Modal Logic ---
+
+        function openModal(prop) {
+            document.getElementById('modalImage').src = prop.image;
+            document.getElementById('modalTitle').textContent = prop.title;
+            document.getElementById('modalPrice').textContent = formatPrice(prop.price);
+            document.getElementById('modalLocation').innerHTML = `<i class="fas fa-map-marker-alt mr-2"></i> ${prop.location}`;
+            document.getElementById('modalBeds').textContent = prop.beds;
+            document.getElementById('modalBaths').textContent = prop.baths;
+            document.getElementById('modalArea').textContent = prop.area;
+            document.getElementById('modalDesc').textContent = prop.desc || "ไม่มีรายละเอียดเพิ่มเติม";
+            
+            const typeMap = { 'house': 'บ้านเดี่ยว', 'townhome': 'ทาวน์โฮม', 'condo': 'คอนโด' };
+            document.getElementById('modalType').textContent = typeMap[prop.type];
+
+            document.getElementById('propertyModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeModal() {
+            document.getElementById('propertyModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openSellModal() {
+            document.getElementById('sellModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSellModal() {
+            document.getElementById('sellModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // --- Form Handlers ---
+
+        function handleContact(e) {
+            e.preventDefault();
+            closeModal();
+            showToast("ส่งข้อมูลติดต่อเรียบร้อย! เจ้าหน้าที่จะติดต่อกลับภายใน 24 ชม.", "success");
+        }
+
+        function handleAddListing(e) {
+            e.preventDefault();
+            
+            // ดึงค่าจากฟอร์ม
+            try {
+                const title = document.getElementById('propTitle').value;
+                const price = parseInt(document.getElementById('propPrice').value);
+                const location = document.getElementById('propLocation').value;
+                const type = document.getElementById('propType').value;
+                const beds = parseInt(document.getElementById('propBeds').value) || 0;
+                const baths = parseInt(document.getElementById('propBaths').value) || 0;
+                const area = parseInt(document.getElementById('propArea').value) || 0;
+                const desc = document.getElementById('propDesc').value;
+                const imageInput = document.getElementById('propImage').value;
+                
+                // ใช้รูป Default ถ้าไม่ได้กรอก
+                const finalImage = imageInput.trim() !== "" ? imageInput : "https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80";
+
+                const newProp = {
+                    id: Date.now(),
+                    title: title,
+                    price: price,
+                    location: location,
+                    beds: beds,
+                    baths: baths,
+                    area: area,
+                    type: type,
+                    image: finalImage,
+                    desc: desc,
+                    category: "new"
+                };
+
+                // เพิ่มข้อมูลใหม่ลงใน Array (ไว้บนสุด)
+                properties.unshift(newProp);
+
+                // รีเซ็ตการค้นหาเพื่อให้เห็นข้อมูลใหม่
+                currentFilter = { text: "", type: "all", category: "all" };
+                document.getElementById('searchInput').value = '';
+                document.getElementById('typeFilter').value = 'all';
+                
+                // อัปเดต UI ปุ่ม Filter
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-600');
+                });
+                document.querySelector('button[onclick="setCategory(\'all\')"]').classList.add('bg-blue-600', 'text-white');
+                document.querySelector('button[onclick="setCategory(\'all\')"]').classList.remove('bg-gray-200', 'text-gray-600');
+
+                // Render ใหม่
+                renderProperties(properties);
+
+                // ปิด Modal และแจ้งเตือน
+                closeSellModal();
+                showToast("ลงประกาศสำเร็จ! บ้านของคุณแสดงบนหน้าเว็บแล้ว", "success");
+                
+                // เลื่อนหน้าจอไปดูรายการ
+                document.getElementById('listings').scrollIntoView({ behavior: 'smooth' });
+                
+                // ล้างฟอร์ม
+                e.target.reset();
+
+            } catch (err) {
+                console.error("Error adding listing:", err);
+                alert("เกิดข้อผิดพลาด: กรุณาตรวจสอบข้อมูลให้ครบถ้วน");
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const bgClass = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            
+            toast.className = `toast flex items-center ${bgClass} text-white px-6 py-3 rounded-lg shadow-lg min-w-[300px] z-50`;
+            toast.innerHTML = `
+                <i class="fas fa-${icon} mr-3 text-xl"></i>
+                <span class="font-medium">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                toast.addEventListener('animationend', () => {
+                    toast.remove();
+                });
+            }, 3000);
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('propertyModal');
+            const sellModal = document.getElementById('sellModal');
+            if (event.target == modal) closeModal();
+            if (event.target == sellModal) closeSellModal();
+        }
+    </script>
+</body>
+</html>
