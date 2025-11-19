@@ -36,9 +36,9 @@ const PropertyCard = ({ property, onClick }) => {
                                     มาใหม่
                                 </span>
                             )}
-                            {property.category === 'hot' && (
+                            {(property.category === 'hot' || (property.views > 100)) && (
                                 <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
-                                    ยอดนิยม
+                                    ที่นิยม
                                 </span>
                             )}
                         </>

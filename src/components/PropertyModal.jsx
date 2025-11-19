@@ -28,8 +28,8 @@ const PropertyModal = ({ property, onClose, onContact }) => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                     {/* Image Gallery */}
-                    <div className="bg-gray-200 relative flex flex-col">
-                        <div className="h-64 lg:h-80 w-full relative">
+                    <div className="bg-gray-200 relative flex flex-col h-full">
+                        <div className="w-full relative flex-1 min-h-[300px]">
                             <img
                                 src={images[activeImageIndex]}
                                 alt={property.title}

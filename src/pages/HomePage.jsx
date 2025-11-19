@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { doc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '../firebase';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import PropertyFilter from '../components/PropertyFilter';
@@ -39,12 +41,25 @@ const HomePage = ({ properties, onPropertyView }) => {
         window.location.reload();
     };
 
-    const handlePropertyClick = (property) => {
+    const handlePropertyClick = async (property) => {
         setSelectedProperty(property);
+        document.body.style.overflow = 'hidden';
+
+        // Increment view count if property is not sold
+        if (property.status !== 'sold') {
+            try {
+                const propertyRef = doc(db, "properties", property.id);
+                await updateDoc(propertyRef, {
+                    views: increment(1)
+                });
+            } catch (error) {
+                console.error("Error updating view count:", error);
+            }
+        }
+
         if (onPropertyView) {
             onPropertyView(property.id);
         }
-        document.body.style.overflow = 'hidden';
     };
 
     const closePropertyModal = () => {

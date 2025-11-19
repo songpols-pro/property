@@ -1,51 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
-import { initialProperties } from './data/mockData';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
-function App() {
-  const [properties, setProperties] = useState(initialProperties);
+const App = () => {
+  const [properties, setProperties] = useState([]);
 
-  const handleAddListing = (newListing) => {
-    setProperties(prev => [newListing, ...prev]);
-  };
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "properties"), (snapshot) => {
+      const propertiesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setProperties(propertiesData);
+    });
 
-  const handleDeleteListing = (id) => {
-    setProperties(prev => prev.filter(p => p.id !== id));
-  };
-
-  const handleUpdateListing = (updatedListing) => {
-    setProperties(prev => prev.map(p => p.id === updatedListing.id ? updatedListing : p));
-  };
-
-  const handlePropertyView = (id) => {
-    setProperties(prev => prev.map(p => {
-      if (p.id === id && p.status !== 'sold') {
-        return { ...p, views: (p.views || 0) + 1 };
-      }
-      return p;
-    }));
-  };
+    return () => unsubscribe();
+  }, []);
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage properties={properties} onPropertyView={handlePropertyView} />} />
+        <Route path="/" element={<HomePage properties={properties} />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route
           path="/admin"
           element={
-            <AdminPage
-              properties={properties}
-              onAddListing={handleAddListing}
-              onDeleteListing={handleDeleteListing}
-              onUpdateListing={handleUpdateListing}
-            />
+            <ProtectedRoute>
+              <AdminPage
+                properties={properties}
+              />
+            </ProtectedRoute>
           }
         />
       </Routes>
     </Router>
   );
-}
+};
 
 export default App;

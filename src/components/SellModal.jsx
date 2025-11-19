@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Plus, Trash } from 'lucide-react';
+import { X, CheckCircle, Upload, Trash } from 'lucide-react';
 
 const SellModal = ({ onClose, onSubmit, initialData = null }) => {
     const [formData, setFormData] = useState({
@@ -11,7 +11,7 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
         baths: 1,
         area: 30,
         desc: '',
-        images: ['https://images.unsplash.com/photo-151358468e774-c447475a968b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'],
+        images: [],
         status: 'available',
         mapUrl: ''
     });
@@ -26,40 +26,97 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
         }
     }, [initialData]);
 
+    useEffect(() => {
+        // Load Cloudinary Upload Widget script
+        if (!window.cloudinary) {
+            const script = document.createElement('script');
+            script.src = 'https://upload-widget.cloudinary.com/global/all.js';
+            script.async = true;
+            document.body.appendChild(script);
+        }
+    }, []);
+
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
-    const handleImageChange = (index, value) => {
-        const newImages = [...formData.images];
-        newImages[index] = value;
-        setFormData(prev => ({ ...prev, images: newImages }));
-    };
-
-    const addImageField = () => {
-        setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
-    };
-
-    const removeImageField = (index) => {
-        if (formData.images.length > 1) {
-            const newImages = formData.images.filter((_, i) => i !== index);
-            setFormData(prev => ({ ...prev, images: newImages }));
+    const openCloudinaryWidget = () => {
+        if (!window.cloudinary) {
+            alert('กำลังโหลด Cloudinary Widget... กรุณารอสักครู่แล้วลองใหม่');
+            return;
         }
+
+        const widget = window.cloudinary.createUploadWidget(
+            {
+                cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+                uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+                sources: ['local', 'url', 'camera'],
+                multiple: true,
+                maxFiles: 5,
+                resourceType: 'image',
+                clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+                maxImageFileSize: 5000000, // 5MB
+                folder: 'properties',
+                cropping: false,
+                showSkipCropButton: true,
+                styles: {
+                    palette: {
+                        window: '#FFFFFF',
+                        windowBorder: '#3B82F6',
+                        tabIcon: '#3B82F6',
+                        menuIcons: '#5A616A',
+                        textDark: '#000000',
+                        textLight: '#FFFFFF',
+                        link: '#3B82F6',
+                        action: '#3B82F6',
+                        inactiveTabIcon: '#9CA3AF',
+                        error: '#EF4444',
+                        inProgress: '#3B82F6',
+                        complete: '#10B981',
+                        sourceBg: '#F3F4F6'
+                    }
+                }
+            },
+            (error, result) => {
+                if (!error && result && result.event === 'success') {
+                    const imageUrl = result.info.secure_url;
+                    setFormData(prev => ({
+                        ...prev,
+                        images: [...prev.images, imageUrl]
+                    }));
+                }
+            }
+        );
+
+        widget.open();
+    };
+
+    const removeImage = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (formData.images.length === 0) {
+            alert('กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป');
+            return;
+        }
+
         onSubmit({
             ...formData,
             price: parseInt(formData.price),
             beds: parseInt(formData.beds),
             baths: parseInt(formData.baths),
             area: parseInt(formData.area),
-            id: initialData ? initialData.id : Date.now(),
             category: initialData ? initialData.category : 'new',
             date: initialData ? initialData.date : new Date().toISOString().split('T')[0],
-            images: formData.images.filter(img => img.trim() !== '') // Filter empty strings
+            views: initialData ? (initialData.views || 0) : 0,
+            images: formData.images
         });
     };
 
@@ -82,37 +139,52 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    {/* Image Upload Section */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">รูปภาพบ้าน (URL)</label>
-                        <div className="space-y-2">
-                            {formData.images.map((img, index) => (
-                                <div key={index} className="flex gap-2">
-                                    <input
-                                        type="url"
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
-                                        placeholder={`URL รูปภาพที่ ${index + 1}`}
-                                        value={img}
-                                        onChange={(e) => handleImageChange(index, e.target.value)}
-                                    />
-                                    {formData.images.length > 1 && (
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            รูปภาพบ้าน <span className="text-red-500">*</span>
+                        </label>
+
+                        {/* Image Previews */}
+                        {formData.images.length > 0 && (
+                            <div className="grid grid-cols-3 gap-3 mb-3">
+                                {formData.images.map((imageUrl, index) => (
+                                    <div key={index} className="relative group">
+                                        <img
+                                            src={imageUrl}
+                                            alt={`Preview ${index + 1}`}
+                                            className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                                        />
                                         <button
                                             type="button"
-                                            onClick={() => removeImageField(index)}
-                                            className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition"
+                                            onClick={() => removeImage(index)}
+                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
                                         >
-                                            <Trash className="w-5 h-5" />
+                                            <Trash className="w-4 h-4" />
                                         </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <button
-                            type="button"
-                            onClick={addImageField}
-                            className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center"
-                        >
-                            <Plus className="w-4 h-4 mr-1" /> เพิ่มรูปภาพ
-                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Upload Button */}
+                        {formData.images.length < 5 && (
+                            <button
+                                type="button"
+                                onClick={openCloudinaryWidget}
+                                className="flex items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                            >
+                                <Upload className="w-5 h-5 mr-2 text-gray-500" />
+                                <span className="text-sm text-gray-600">
+                                    คลิกเพื่ออัปโหลดรูปภาพ (สูงสุด 5 รูป)
+                                </span>
+                            </button>
+                        )}
+
+                        {formData.images.length === 0 && (
+                            <p className="text-xs text-red-500 mt-1">กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">รองรับไฟล์: JPG, PNG, GIF, WebP (สูงสุด 5MB/รูป)</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -176,7 +248,11 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                     </div>
 
                     <div className="pt-4 border-t border-gray-100">
-                        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-md flex justify-center items-center transform active:scale-95">
+                        <button
+                            type="submit"
+                            disabled={formData.images.length === 0}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-md flex justify-center items-center transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             <CheckCircle className="w-5 h-5 mr-2" /> {initialData ? 'บันทึกการแก้ไข' : 'ลงประกาศทันที'}
                         </button>
                     </div>
