@@ -18,7 +18,7 @@ export const initialProperties = [
         date: "2025-09-15",
         status: "available",
         views: 120,
-        mapUrl: "https://www.google.com/maps/place//@13.6603789,100.6965079,528m/data=!3m1!1e3!4m6!1m5!3m4!2zMTPCsDM5JzM3LjAiTiAxMDDCsDQxJzUwLjkiRQ!8m2!3d13.6602778!4d100.6974722?entry=ttu&g_ep=EgoyMDI1MTExNy4wIKXMDSoASAFQAw%3D%3D"
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m13!1m8!1m3!1d2299.4191556235287!2d100.6965079!3d13.6603789!3m2!1i1024!2i768!4f13.1!3m2!1m1!2s!5e1!3m2!1sth!2sth!4v1763659071591!5m2!1sth!2sth"
     },
     {
         id: 2,

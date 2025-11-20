@@ -143,6 +143,16 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
 
     const handleChange = (e) => {
         const { id, value } = e.target;
+
+        // Auto-extract URL from iframe code if pasted into mapUrl
+        if (id === 'mapUrl' && value.includes('<iframe')) {
+            const srcMatch = value.match(/src="([^"]+)"/);
+            if (srcMatch) {
+                setFormData(prev => ({ ...prev, [id]: srcMatch[1] }));
+                return;
+            }
+        }
+
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
@@ -487,6 +497,37 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link</label>
                             <input type="url" id="mapUrl" className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="https://maps.google.com/..." value={formData.mapUrl} onChange={handleChange} />
+                            {formData.mapUrl && (
+                                <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                                    <iframe
+                                        src={(() => {
+                                            const url = formData.mapUrl;
+                                            if (url.includes('embed')) return url;
+
+                                            // Try to extract coordinates from !3d and !4d
+                                            const latMatch = url.match(/!3d([\d.]+)/);
+                                            const lngMatch = url.match(/!4d([\d.]+)/);
+                                            if (latMatch && lngMatch) {
+                                                return `https://maps.google.com/maps?q=${latMatch[1]},${lngMatch[1]}&z=15&output=embed`;
+                                            }
+
+                                            // Fallback: Try to extract from @lat,lng
+                                            const atMatch = url.match(/@([\d.]+),([\d.]+)/);
+                                            if (atMatch) {
+                                                return `https://maps.google.com/maps?q=${atMatch[1]},${atMatch[2]}&z=15&output=embed`;
+                                            }
+
+                                            return url;
+                                        })()}
+                                        width="100%"
+                                        height="100%"
+                                        style={{ border: 0 }}
+                                        allowFullScreen=""
+                                        loading="lazy"
+                                        className="w-full h-full"
+                                    ></iframe>
+                                </div>
+                            )}
                         </div>
                     </div>
 

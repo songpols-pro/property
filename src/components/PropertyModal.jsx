@@ -132,7 +132,9 @@ const PropertyModal = ({ property, onClose, onContact }) => {
                                     ></iframe>
                                 </div>
                                 <a
-                                    href={property.mapUrl}
+                                    href={property.mapUrl.includes('/embed')
+                                        ? property.mapUrl.replace('/embed', '/maps') // Try to convert or just open as is
+                                        : property.mapUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm transition mt-2"

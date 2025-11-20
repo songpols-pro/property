@@ -244,15 +244,47 @@ const PropertyDetailPage = () => {
                             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                                 <Map className="w-5 h-5 mr-2 text-blue-600" /> แผนที่ตั้งทรัพย์
                             </h3>
-                            <div className="aspect-video w-full rounded-xl overflow-hidden shadow-inner bg-gray-100 flex items-center justify-center">
+                            <div className="relative w-full h-[400px] rounded-xl overflow-hidden shadow-md border border-gray-200">
+                                <iframe
+                                    src={(() => {
+                                        const url = property.mapUrl;
+                                        if (url.includes('embed')) return url;
+
+                                        // Try to extract coordinates from !3d and !4d (Standard Google Maps URL)
+                                        const latMatch = url.match(/!3d([\d.]+)/);
+                                        const lngMatch = url.match(/!4d([\d.]+)/);
+
+                                        if (latMatch && lngMatch) {
+                                            return `https://maps.google.com/maps?q=${latMatch[1]},${lngMatch[1]}&z=15&output=embed`;
+                                        }
+
+                                        // Fallback: Try to extract from @lat,lng
+                                        const atMatch = url.match(/@([\d.]+),([\d.]+)/);
+                                        if (atMatch) {
+                                            return `https://maps.google.com/maps?q=${atMatch[1]},${atMatch[2]}&z=15&output=embed`;
+                                        }
+
+                                        return url;
+                                    })()}
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    allowFullScreen=""
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    className="w-full h-full"
+                                ></iframe>
+                            </div>
+                            <div className="mt-4 flex justify-end">
                                 <a
-                                    href={property.mapUrl}
+                                    href={property.mapUrl.includes('/embed')
+                                        ? property.mapUrl.replace('/embed', '/maps')
+                                        : property.mapUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition"
+                                    className="inline-flex items-center bg-white border border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-600 px-4 py-2 rounded-lg font-medium text-sm transition shadow-sm"
                                 >
-                                    <MapPin className="w-12 h-12 mb-2" />
-                                    <span className="font-medium">คลิกเพื่อดูแผนที่บน Google Maps</span>
+                                    <Map className="w-4 h-4 mr-2" /> เปิดดูใน Google Maps แบบเต็ม
                                 </a>
                             </div>
                         </div>
