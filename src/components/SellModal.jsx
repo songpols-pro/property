@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Upload, Trash } from 'lucide-react';
+import { X, CheckCircle, Upload, Trash, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 
 const SellModal = ({ onClose, onSubmit, initialData = null }) => {
     const [formData, setFormData] = useState({
@@ -103,9 +103,6 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                 mapUrl: initialData.mapUrl || '',
                 province: initialData.province || '',
                 district: initialData.district || '',
-                subDistrict: initialData.subDistrict || '',
-                subDistrict: initialData.subDistrict || '',
-                zipCode: initialData.zipCode || '',
                 subDistrict: initialData.subDistrict || '',
                 zipCode: initialData.zipCode || '',
                 zones: (initialData.zones || []).map(z => ({
@@ -217,6 +214,59 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
         }));
     };
 
+    const moveImageLeft = (index) => {
+        if (index === 0) return;
+        setFormData(prev => {
+            const newImages = [...prev.images];
+            [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+            return { ...prev, images: newImages };
+        });
+    };
+
+    const moveImageRight = (index) => {
+        if (index === formData.images.length - 1) return;
+        setFormData(prev => {
+            const newImages = [...prev.images];
+            [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+            return { ...prev, images: newImages };
+        });
+    };
+
+    // Zone image reordering functions
+    const moveZoneImageLeft = (zoneIndex, imgIndex) => {
+        if (imgIndex === 0) return;
+        const newZones = [...formData.zones];
+        const images = [...newZones[zoneIndex].images];
+        [images[imgIndex - 1], images[imgIndex]] = [images[imgIndex], images[imgIndex - 1]];
+        newZones[zoneIndex].images = images;
+        setFormData(prev => ({ ...prev, zones: newZones }));
+    };
+
+    const moveZoneImageRight = (zoneIndex, imgIndex) => {
+        const zone = formData.zones[zoneIndex];
+        if (imgIndex === zone.images.length - 1) return;
+        const newZones = [...formData.zones];
+        const images = [...newZones[zoneIndex].images];
+        [images[imgIndex], images[imgIndex + 1]] = [images[imgIndex + 1], images[imgIndex]];
+        newZones[zoneIndex].images = images;
+        setFormData(prev => ({ ...prev, zones: newZones }));
+    };
+
+    // Zone reordering functions
+    const moveZoneUp = (index) => {
+        if (index === 0) return;
+        const newZones = [...formData.zones];
+        [newZones[index - 1], newZones[index]] = [newZones[index], newZones[index - 1]];
+        setFormData(prev => ({ ...prev, zones: newZones }));
+    };
+
+    const moveZoneDown = (index) => {
+        if (index === formData.zones.length - 1) return;
+        const newZones = [...formData.zones];
+        [newZones[index], newZones[index + 1]] = [newZones[index + 1], newZones[index]];
+        setFormData(prev => ({ ...prev, zones: newZones }));
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -234,14 +284,13 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
             category: initialData ? initialData.category : 'new',
             date: initialData ? initialData.date : new Date().toISOString().split('T')[0],
             views: initialData ? (initialData.views || 0) : 0,
-            views: initialData ? (initialData.views || 0) : 0,
             images: formData.images,
             zones: formData.zones || []
         });
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
             <div
                 className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-scroll relative shadow-2xl animate-slide-in"
                 onClick={e => e.stopPropagation()}
@@ -267,23 +316,53 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
 
                         {/* Image Previews */}
                         {formData.images.length > 0 && (
-                            <div className="grid grid-cols-3 gap-3 mb-3">
-                                {formData.images.map((imageUrl, index) => (
-                                    <div key={index} className="relative group">
-                                        <img
-                                            src={imageUrl}
-                                            alt={`Preview ${index + 1}`}
-                                            className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeImage(index)}
-                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                                        >
-                                            <Trash className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
+                            <div>
+                                <p className="text-xs text-blue-600 mb-2">📌 รูปแรกจะเป็นรูปหน้าปกหลัก</p>
+                                <div className="grid grid-cols-3 gap-3 mb-3">
+                                    {formData.images.map((imageUrl, index) => (
+                                        <div key={index} className="relative group">
+                                            <img
+                                                src={imageUrl}
+                                                alt={`Preview ${index + 1}`}
+                                                className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                                            />
+                                            {index === 0 && (
+                                                <div className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                                    ปก
+                                                </div>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(index)}
+                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                                            >
+                                                <Trash className="w-4 h-4" />
+                                            </button>
+                                            {/* Move Left Button */}
+                                            {index > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveImageLeft(index)}
+                                                    className="absolute bottom-1 left-1 bg-blue-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-blue-600"
+                                                    title="เลื่อนซ้าย"
+                                                >
+                                                    <ChevronLeft className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            {/* Move Right Button */}
+                                            {index < formData.images.length - 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveImageRight(index)}
+                                                    className="absolute bottom-1 right-1 bg-blue-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-blue-600"
+                                                    title="เลื่อนขวา"
+                                                >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
@@ -450,6 +529,35 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                         <div className="space-y-6">
                             {(formData.zones || []).map((zone, index) => (
                                 <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                                    {/* Zone number badge */}
+                                    <div className="absolute top-2 left-2 bg-gray-600 text-white text-xs px-2 py-1 rounded-full font-bold">
+                                        โซน {index + 1}
+                                    </div>
+
+                                    {/* Zone reorder buttons */}
+                                    <div className="absolute top-2 right-10 flex gap-1">
+                                        {index > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => moveZoneUp(index)}
+                                                className="bg-purple-500 hover:bg-purple-600 text-white p-1 rounded transition"
+                                                title="เลื่อนโซนขึ้น"
+                                            >
+                                                <ChevronUp className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {index < formData.zones.length - 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => moveZoneDown(index)}
+                                                className="bg-purple-500 hover:bg-purple-600 text-white p-1 rounded transition"
+                                                title="เลื่อนโซนลง"
+                                            >
+                                                <ChevronDown className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+
                                     <button
                                         type="button"
                                         onClick={() => setFormData(prev => ({
@@ -461,7 +569,7 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                                         <Trash className="w-4 h-4" />
                                     </button>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 mt-6">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">ชื่อโซน (เช่น ห้องนอนใหญ่)</label>
                                             <input
@@ -507,11 +615,18 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
 
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">รูปภาพโซน (สูงสุด 5 รูป)</label>
-
+                                        {(zone.images || []).length > 0 && (
+                                            <p className="text-xs text-blue-600 mb-2">📌 รูปแรกจะเป็นรูปหน้าปกของโซนนี้</p>
+                                        )}
                                         <div className="flex flex-wrap gap-2 mb-2">
                                             {(zone.images || []).map((img, imgIdx) => (
                                                 <div key={imgIdx} className="relative group">
-                                                    <img src={img} alt={`Zone ${index + 1} - ${imgIdx + 1}`} className="h-20 w-20 object-cover rounded border border-gray-300" />
+                                                    <img src={img} alt={`Zone ${index + 1} - ${imgIdx + 1}`} className="h-20 w-20 object-cover rounded border-2 border-gray-300" />
+                                                    {imgIdx === 0 && (
+                                                        <div className="absolute top-0.5 left-0.5 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                                                            ปก
+                                                        </div>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={() => {
@@ -523,6 +638,28 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                                                     >
                                                         <X className="w-3 h-3" />
                                                     </button>
+                                                    {/* Move Left Button */}
+                                                    {imgIdx > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveZoneImageLeft(index, imgIdx)}
+                                                            className="absolute bottom-0.5 left-0.5 bg-blue-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-blue-600"
+                                                            title="เลื่อนซ้าย"
+                                                        >
+                                                            <ChevronLeft className="w-3 h-3" />
+                                                        </button>
+                                                    )}
+                                                    {/* Move Right Button */}
+                                                    {imgIdx < (zone.images || []).length - 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveZoneImageRight(index, imgIdx)}
+                                                            className="absolute bottom-0.5 right-0.5 bg-blue-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-blue-600"
+                                                            title="เลื่อนขวา"
+                                                        >
+                                                            <ChevronRight className="w-3 h-3" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
