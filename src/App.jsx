@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import HomePage from './pages/HomePage';
+import PropertyDetailPage from './pages/PropertyDetailPage';
 import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -26,6 +27,7 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage properties={properties} />} />
+        <Route path="/property/:id" element={<PropertyDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route
           path="/admin"

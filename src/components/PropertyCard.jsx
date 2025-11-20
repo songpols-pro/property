@@ -54,7 +54,10 @@ const PropertyCard = ({ property, onClick }) => {
                     {property.title}
                 </h3>
                 <p className="text-gray-500 text-sm mb-4 flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" /> {property.location}
+                    <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">
+                        {property.district ? `${property.district}, ${property.province}` : property.location}
+                    </span>
                 </p>
 
                 <div className="flex justify-between items-center border-t border-gray-100 pt-4 text-sm text-gray-600">
