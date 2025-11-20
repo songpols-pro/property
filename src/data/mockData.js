@@ -18,7 +18,7 @@ export const initialProperties = [
         date: "2025-09-15",
         status: "available",
         views: 120,
-        mapUrl: "https://www.google.com/maps/place/%E0%B9%81%E0%B8%AD%E0%B8%97%E0%B9%82%E0%B8%A1%E0%B8%8B+%E0%B9%82%E0%B8%AD%E0%B9%80%E0%B8%AD%E0%B8%8B%E0%B8%B4%E0%B8%AA+%E0%B8%AD%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B8%99%E0%B8%B8%E0%B8%8A/@13.7136306,100.645601,17.75z/data=!4m15!1m8!3m7!1s0x311d6019efb47537:0x1a90860bef8e5797!2z4LiL4Lit4LiiIOC4reC5iOC4reC4meC4meC4uOC4iiA0NCDguIHguKPguLjguIfguYDguJfguJ7guKHguKvguLLguJnguITguKM!3b1!8m2!3d13.7026282!4d100.6306898!16s%2Fg%2F1txnlxxm!3m5!1s0x311d6189df2acc09:0xa0000f4f71a724c!8m2!3d13.7135636!4d100.6471935!16s%2Fg%2F11v9vbs6_g?entry=ttu&g_ep=EgoyMDI1MTExNy4wIKXMDSoASAFQAw%3D%3D"
+        mapUrl: "https://www.google.com/maps/place//@13.6603789,100.6965079,528m/data=!3m1!1e3!4m6!1m5!3m4!2zMTPCsDM5JzM3LjAiTiAxMDDCsDQxJzUwLjkiRQ!8m2!3d13.6602778!4d100.6974722?entry=ttu&g_ep=EgoyMDI1MTExNy4wIKXMDSoASAFQAw%3D%3D"
     },
     {
         id: 2,

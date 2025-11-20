@@ -91,17 +91,56 @@ const PropertyModal = ({ property, onClose, onContact }) => {
                             <p className="text-gray-600 text-sm leading-relaxed mb-4">
                                 {property.desc || "ไม่มีรายละเอียดเพิ่มเติม"}
                             </p>
-                            {property.mapUrl && (
+                        </div>
+
+                        {/* Google Maps Section */}
+                        {property.mapUrl && (
+                            <div className="mb-6">
+                                <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                                    <Map className="w-5 h-5 mr-2 text-blue-600" />
+                                    ที่ตั้ง
+                                </h3>
+                                <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-gray-200 shadow-sm">
+                                    <iframe
+                                        src={(() => {
+                                            const url = property.mapUrl;
+                                            if (url.includes('embed')) return url;
+
+                                            // Try to extract coordinates from !3d and !4d (Standard Google Maps URL)
+                                            const latMatch = url.match(/!3d([\d.]+)/);
+                                            const lngMatch = url.match(/!4d([\d.]+)/);
+
+                                            if (latMatch && lngMatch) {
+                                                return `https://maps.google.com/maps?q=${latMatch[1]},${lngMatch[1]}&z=15&output=embed`;
+                                            }
+
+                                            // Fallback: Try to extract from @lat,lng
+                                            const atMatch = url.match(/@([\d.]+),([\d.]+)/);
+                                            if (atMatch) {
+                                                return `https://maps.google.com/maps?q=${atMatch[1]},${atMatch[2]}&z=15&output=embed`;
+                                            }
+
+                                            return url;
+                                        })()}
+                                        width="100%"
+                                        height="100%"
+                                        style={{ border: 0 }}
+                                        allowFullScreen=""
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        className="w-full h-full"
+                                    ></iframe>
+                                </div>
                                 <a
                                     href={property.mapUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm transition"
+                                    className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm transition mt-2"
                                 >
-                                    <Map className="w-4 h-4 mr-1" /> ดูแผนที่บน Google Maps
+                                    <Map className="w-4 h-4 mr-1" /> เปิดดูใน Google Maps แบบเต็ม
                                 </a>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Agent Contact */}
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
