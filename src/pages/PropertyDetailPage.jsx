@@ -47,10 +47,12 @@ const PropertyDetailPage = () => {
     const [property, setProperty] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [contactInfo, setContactInfo] = useState({ phone: '0812345678', lineId: 'dummylineid' });
 
     useEffect(() => {
-        const fetchProperty = async () => {
+        const fetchData = async () => {
             try {
+                // Fetch Property
                 const docRef = doc(db, "properties", id);
                 const docSnap = await getDoc(docRef);
 
@@ -60,14 +62,22 @@ const PropertyDetailPage = () => {
                     console.log("No such document!");
                     navigate('/');
                 }
+
+                // Fetch Contact Settings
+                const settingsRef = doc(db, "settings", "contact");
+                const settingsSnap = await getDoc(settingsRef);
+                if (settingsSnap.exists()) {
+                    setContactInfo(settingsSnap.data());
+                }
+
             } catch (error) {
-                console.error("Error fetching property:", error);
+                console.error("Error fetching data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchProperty();
+        fetchData();
     }, [id, navigate]);
 
     if (loading) {
@@ -82,6 +92,13 @@ const PropertyDetailPage = () => {
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(price);
+    };
+
+    const getLineUrl = (lineInput) => {
+        if (!lineInput) return '#';
+        if (lineInput.startsWith('http')) return lineInput;
+        const cleanId = lineInput.replace('@', '');
+        return `https://line.me/ti/p/~${cleanId}`;
     };
 
     const typeMap = { 'house': 'บ้านเดี่ยว', 'townhome': 'ทาวน์โฮม', 'condo': 'คอนโด' };
@@ -180,13 +197,13 @@ const PropertyDetailPage = () => {
                             {/* Action Buttons */}
                             <div className="grid grid-cols-2 gap-4 mt-auto">
                                 <a
-                                    href="tel:0812345678"
+                                    href={`tel:${contactInfo.phone}`}
                                     className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition shadow-lg flex items-center justify-center"
                                 >
                                     <Phone className="w-5 h-5 mr-2" /> โทรติดต่อ
                                 </a>
                                 <a
-                                    href="https://line.me/ti/p/~dummylineid"
+                                    href={getLineUrl(contactInfo.lineId)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition shadow-lg flex items-center justify-center"

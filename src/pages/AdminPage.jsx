@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { PlusCircle, Trash2, Pencil, ArrowLeft, Search, Filter, LogOut } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil, ArrowLeft, Search, Filter, LogOut, Settings } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import SellModal from '../components/SellModal';
+import ContactSettingsModal from '../components/ContactSettingsModal';
 import Toast from '../components/Toast';
 
 
 const AdminPage = ({ properties, onAddListing, onDeleteListing, onUpdateListing }) => {
     const [isSellModalOpen, setIsSellModalOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [editingProperty, setEditingProperty] = useState(null);
     const [toasts, setToasts] = useState([]);
     const navigate = useNavigate();
@@ -106,7 +108,12 @@ const AdminPage = ({ properties, onAddListing, onDeleteListing, onUpdateListing 
                         <h1 className="text-3xl font-bold text-gray-800">จัดการประกาศขาย</h1>
                     </div>
                     <div className="flex gap-3">
-
+                        <button
+                            onClick={() => setIsSettingsModalOpen(true)}
+                            className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 px-4 py-2 rounded-lg font-bold transition flex items-center shadow-sm"
+                        >
+                            <Settings className="w-5 h-5 mr-2" /> ตั้งค่าการติดต่อ
+                        </button>
                         <button
                             onClick={handleLogout}
                             className="bg-white hover:bg-gray-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold transition flex items-center shadow-sm"
@@ -279,6 +286,13 @@ const AdminPage = ({ properties, onAddListing, onDeleteListing, onUpdateListing 
                     onClose={() => setIsSellModalOpen(false)}
                     onSubmit={handleSubmit}
                     initialData={editingProperty}
+                />
+            )}
+
+            {isSettingsModalOpen && (
+                <ContactSettingsModal
+                    onClose={() => setIsSettingsModalOpen(false)}
+                    showToast={showToast}
                 />
             )}
 
