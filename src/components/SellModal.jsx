@@ -1,5 +1,152 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Upload, Trash, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, CheckCircle, Upload, Trash, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const SortableZoneItem = ({ zone, index, updateZone, removeZone, moveZoneImageLeft, moveZoneImageRight, addZoneImage, removeZoneImage, openCloudinaryWidget }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: zone.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative cursor-grab active:cursor-grabbing group hover:border-blue-400 transition-colors"
+        >
+            {/* Drag Handle Visual Indicator */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-300 group-hover:text-blue-400 transition-colors">
+                <GripVertical className="w-5 h-5" />
+            </div>
+
+            {/* Zone number badge */}
+            <div className="absolute top-2 left-2 bg-gray-600 text-white text-xs px-2 py-1 rounded-full font-bold z-10">
+                โซน {index + 1}
+            </div>
+
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.stopPropagation(); // Prevent drag start
+                    removeZone(index);
+                }}
+                onPointerDown={(e) => e.stopPropagation()} // Ensure pointer down doesn't start drag
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition z-10 bg-white rounded-full p-1 shadow-sm"
+            >
+                <Trash className="w-4 h-4" />
+            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 mt-8">
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">ชื่อโซน (เช่น ห้องนอนใหญ่)</label>
+                    <input
+                        type="text"
+                        value={zone.name}
+                        onChange={(e) => updateZone(index, 'name', e.target.value)}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">ขนาด (ระบุหน่วย)</label>
+                    <input
+                        type="text"
+                        value={zone.size}
+                        onChange={(e) => updateZone(index, 'size', e.target.value)}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="เช่น 4x5 ม."
+                    />
+                </div>
+            </div>
+
+            <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">รายละเอียดโซน</label>
+                <textarea
+                    value={zone.desc}
+                    onChange={(e) => updateZone(index, 'desc', e.target.value)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    rows="2"
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                ></textarea>
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">รูปภาพโซน (สูงสุด 5 รูป)</label>
+                {(zone.images || []).length > 0 && (
+                    <p className="text-xs text-blue-600 mb-2">📌 รูปแรกจะเป็นรูปหน้าปกของโซนนี้</p>
+                )}
+                <div className="flex flex-wrap gap-2 mb-2">
+                    {(zone.images || []).map((img, imgIdx) => (
+                        <div key={imgIdx} className="relative group/img" onPointerDown={(e) => e.stopPropagation()}>
+                            <img src={img} alt={`Zone ${index + 1} - ${imgIdx + 1}`} className="h-20 w-20 object-cover rounded border-2 border-gray-300" />
+                            {imgIdx === 0 && (
+                                <div className="absolute top-0.5 left-0.5 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                                    ปก
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => removeZoneImage(index, imgIdx)}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition shadow-sm"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                            {/* Move Left Button */}
+                            {imgIdx > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => moveZoneImageLeft(index, imgIdx)}
+                                    className="absolute bottom-0.5 left-0.5 bg-blue-500 text-white p-0.5 rounded-full opacity-0 group-hover/img:opacity-100 transition hover:bg-blue-600 shadow-sm"
+                                    title="เลื่อนซ้าย"
+                                >
+                                    <ChevronLeft className="w-3 h-3" />
+                                </button>
+                            )}
+                            {/* Move Right Button */}
+                            {imgIdx < (zone.images || []).length - 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => moveZoneImageRight(index, imgIdx)}
+                                    className="absolute bottom-0.5 right-0.5 bg-blue-500 text-white p-0.5 rounded-full opacity-0 group-hover/img:opacity-100 transition hover:bg-blue-600 shadow-sm"
+                                    title="เลื่อนขวา"
+                                >
+                                    <ChevronRight className="w-3 h-3" />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {(zone.images || []).length < 5 && (
+                    <div className="flex gap-2" onPointerDown={(e) => e.stopPropagation()}>
+                        <button
+                            type="button"
+                            onClick={() => openCloudinaryWidget(index)}
+                            className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded border border-gray-300 transition flex items-center"
+                        >
+                            <Upload className="w-3 h-3 mr-1" /> เพิ่มรูปภาพ
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => addZoneImage(index)}
+                            className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded border border-gray-300 transition font-bold"
+                            title="เพิ่มจากลิงก์ (URL)"
+                        >
+                            URL
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const SellModal = ({ onClose, onSubmit, initialData = null }) => {
     const [formData, setFormData] = useState({
@@ -25,6 +172,17 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
     const [provinces, setProvinces] = useState([]);
     const [amphures, setAmphures] = useState([]);
     const [tambons, setTambons] = useState([]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     // Fetch Thai Address Data
     useEffect(() => {
@@ -107,6 +265,7 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                 zipCode: initialData.zipCode || '',
                 zones: (initialData.zones || []).map(z => ({
                     ...z,
+                    id: z.id || crypto.randomUUID(), // Ensure ID exists
                     images: z.images || (z.image ? [z.image] : [])
                 }))
             });
@@ -156,11 +315,16 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
-    const openCloudinaryWidget = () => {
+    const openCloudinaryWidget = (zoneIndex = null) => {
         if (!window.cloudinary) {
             alert('กำลังโหลด Cloudinary Widget... กรุณารอสักครู่แล้วลองใหม่');
             return;
         }
+
+        const isZoneUpload = zoneIndex !== null;
+        const maxFiles = isZoneUpload
+            ? 5 - (formData.zones[zoneIndex]?.images?.length || 0)
+            : 5;
 
         const widget = window.cloudinary.createUploadWidget(
             {
@@ -168,11 +332,11 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                 uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
                 sources: ['local', 'url', 'camera'],
                 multiple: true,
-                maxFiles: 5,
+                maxFiles: maxFiles,
                 resourceType: 'image',
                 clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
                 maxImageFileSize: 5000000, // 5MB
-                folder: 'properties',
+                folder: isZoneUpload ? 'property-zones' : 'properties',
                 cropping: false,
                 showSkipCropButton: true,
                 styles: {
@@ -196,10 +360,17 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
             (error, result) => {
                 if (!error && result && result.event === 'success') {
                     const imageUrl = result.info.secure_url;
-                    setFormData(prev => ({
-                        ...prev,
-                        images: [...prev.images, imageUrl]
-                    }));
+
+                    if (isZoneUpload) {
+                        const newZones = [...formData.zones];
+                        newZones[zoneIndex].images = [...(newZones[zoneIndex].images || []), imageUrl];
+                        setFormData(prev => ({ ...prev, zones: newZones }));
+                    } else {
+                        setFormData(prev => ({
+                            ...prev,
+                            images: [...prev.images, imageUrl]
+                        }));
+                    }
                 }
             }
         );
@@ -262,18 +433,48 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
         setFormData(prev => ({ ...prev, zones: newZones }));
     };
 
-    // Zone reordering functions
-    const moveZoneUp = (index) => {
-        if (index === 0) return;
+    // Zone Management
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+
+        if (active.id !== over.id) {
+            setFormData((prev) => {
+                const oldIndex = prev.zones.findIndex((z) => z.id === active.id);
+                const newIndex = prev.zones.findIndex((z) => z.id === over.id);
+
+                return {
+                    ...prev,
+                    zones: arrayMove(prev.zones, oldIndex, newIndex),
+                };
+            });
+        }
+    };
+
+    const updateZone = (index, field, value) => {
         const newZones = [...formData.zones];
-        [newZones[index - 1], newZones[index]] = [newZones[index], newZones[index - 1]];
+        newZones[index][field] = value;
         setFormData(prev => ({ ...prev, zones: newZones }));
     };
 
-    const moveZoneDown = (index) => {
-        if (index === formData.zones.length - 1) return;
+    const removeZone = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            zones: prev.zones.filter((_, i) => i !== index)
+        }));
+    };
+
+    const addZoneImage = (index) => {
+        const url = window.prompt("กรุณาวางลิงก์รูปภาพ (URL):");
+        if (url && url.trim() !== "") {
+            const newZones = [...formData.zones];
+            newZones[index].images = [...(newZones[index].images || []), url.trim()];
+            setFormData(prev => ({ ...prev, zones: newZones }));
+        }
+    };
+
+    const removeZoneImage = (zoneIndex, imgIndex) => {
         const newZones = [...formData.zones];
-        [newZones[index], newZones[index + 1]] = [newZones[index + 1], newZones[index]];
+        newZones[zoneIndex].images = newZones[zoneIndex].images.filter((_, i) => i !== imgIndex);
         setFormData(prev => ({ ...prev, zones: newZones }));
     };
 
@@ -381,7 +582,7 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                             <div className="flex gap-2">
                                 <button
                                     type="button"
-                                    onClick={openCloudinaryWidget}
+                                    onClick={() => openCloudinaryWidget(null)}
                                     className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                                 >
                                     <Upload className="w-5 h-5 mr-2 text-gray-500" />
@@ -559,7 +760,7 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                                 type="button"
                                 onClick={() => setFormData(prev => ({
                                     ...prev,
-                                    zones: [...(prev.zones || []), { name: '', desc: '', size: '', images: [] }]
+                                    zones: [...(prev.zones || []), { id: crypto.randomUUID(), name: '', desc: '', size: '', images: [] }]
                                 }))}
                                 className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-100 transition font-medium"
                             >
@@ -567,202 +768,44 @@ const SellModal = ({ onClose, onSubmit, initialData = null }) => {
                             </button>
                         </div>
 
-                        <div className="space-y-6">
-                            {(formData.zones || []).map((zone, index) => (
-                                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
-                                    {/* Zone number badge */}
-                                    <div className="absolute top-2 left-2 bg-gray-600 text-white text-xs px-2 py-1 rounded-full font-bold">
-                                        โซน {index + 1}
-                                    </div>
-
-                                    {/* Zone reorder buttons */}
-                                    <div className="absolute top-2 right-10 flex gap-1">
-                                        {index > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => moveZoneUp(index)}
-                                                className="bg-purple-500 hover:bg-purple-600 text-white p-1 rounded transition"
-                                                title="เลื่อนโซนขึ้น"
-                                            >
-                                                <ChevronUp className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                        {index < formData.zones.length - 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => moveZoneDown(index)}
-                                                className="bg-purple-500 hover:bg-purple-600 text-white p-1 rounded transition"
-                                                title="เลื่อนโซนลง"
-                                            >
-                                                <ChevronDown className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({
-                                            ...prev,
-                                            zones: prev.zones.filter((_, i) => i !== index)
-                                        }))}
-                                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"
-                                    >
-                                        <Trash className="w-4 h-4" />
-                                    </button>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 mt-6">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">ชื่อโซน (เช่น ห้องนอนใหญ่)</label>
-                                            <input
-                                                type="text"
-                                                value={zone.name}
-                                                onChange={(e) => {
-                                                    const newZones = [...formData.zones];
-                                                    newZones[index].name = e.target.value;
-                                                    setFormData(prev => ({ ...prev, zones: newZones }));
-                                                }}
-                                                className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">ขนาด (ระบุหน่วย)</label>
-                                            <input
-                                                type="text"
-                                                value={zone.size}
-                                                onChange={(e) => {
-                                                    const newZones = [...formData.zones];
-                                                    newZones[index].size = e.target.value;
-                                                    setFormData(prev => ({ ...prev, zones: newZones }));
-                                                }}
-                                                className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                                                placeholder="เช่น 4x5 ม."
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">รายละเอียดโซน</label>
-                                        <textarea
-                                            value={zone.desc}
-                                            onChange={(e) => {
-                                                const newZones = [...formData.zones];
-                                                newZones[index].desc = e.target.value;
-                                                setFormData(prev => ({ ...prev, zones: newZones }));
-                                            }}
-                                            rows="2"
-                                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                                        ></textarea>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">รูปภาพโซน (สูงสุด 5 รูป)</label>
-                                        {(zone.images || []).length > 0 && (
-                                            <p className="text-xs text-blue-600 mb-2">📌 รูปแรกจะเป็นรูปหน้าปกของโซนนี้</p>
-                                        )}
-                                        <div className="flex flex-wrap gap-2 mb-2">
-                                            {(zone.images || []).map((img, imgIdx) => (
-                                                <div key={imgIdx} className="relative group">
-                                                    <img src={img} alt={`Zone ${index + 1} - ${imgIdx + 1}`} className="h-20 w-20 object-cover rounded border-2 border-gray-300" />
-                                                    {imgIdx === 0 && (
-                                                        <div className="absolute top-0.5 left-0.5 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
-                                                            ปก
-                                                        </div>
-                                                    )}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const newZones = [...formData.zones];
-                                                            newZones[index].images = newZones[index].images.filter((_, i) => i !== imgIdx);
-                                                            setFormData(prev => ({ ...prev, zones: newZones }));
-                                                        }}
-                                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
-                                                    >
-                                                        <X className="w-3 h-3" />
-                                                    </button>
-                                                    {/* Move Left Button */}
-                                                    {imgIdx > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => moveZoneImageLeft(index, imgIdx)}
-                                                            className="absolute bottom-0.5 left-0.5 bg-blue-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-blue-600"
-                                                            title="เลื่อนซ้าย"
-                                                        >
-                                                            <ChevronLeft className="w-3 h-3" />
-                                                        </button>
-                                                    )}
-                                                    {/* Move Right Button */}
-                                                    {imgIdx < (zone.images || []).length - 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => moveZoneImageRight(index, imgIdx)}
-                                                            className="absolute bottom-0.5 right-0.5 bg-blue-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-blue-600"
-                                                            title="เลื่อนขวา"
-                                                        >
-                                                            <ChevronRight className="w-3 h-3" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {(zone.images || []).length < 5 && (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (!window.cloudinary) return;
-                                                        window.cloudinary.createUploadWidget(
-                                                            {
-                                                                cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-                                                                uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
-                                                                sources: ['local', 'url', 'camera'],
-                                                                multiple: true,
-                                                                maxFiles: 5 - (zone.images || []).length,
-                                                                resourceType: 'image',
-                                                                folder: 'property-zones',
-                                                            },
-                                                            (error, result) => {
-                                                                if (!error && result && result.event === 'success') {
-                                                                    const newZones = [...formData.zones];
-                                                                    newZones[index].images = [...(newZones[index].images || []), result.info.secure_url];
-                                                                    setFormData(prev => ({ ...prev, zones: newZones }));
-                                                                }
-                                                            }
-                                                        ).open();
-                                                    }}
-                                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded border border-gray-300 transition flex items-center"
-                                                >
-                                                    <Upload className="w-3 h-3 mr-1" /> เพิ่มรูปภาพ
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const url = window.prompt("กรุณาวางลิงก์รูปภาพ (URL):");
-                                                        if (url && url.trim() !== "") {
-                                                            const newZones = [...formData.zones];
-                                                            newZones[index].images = [...(newZones[index].images || []), url.trim()];
-                                                            setFormData(prev => ({ ...prev, zones: newZones }));
-                                                        }
-                                                    }}
-                                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded border border-gray-300 transition font-bold"
-                                                    title="เพิ่มจากลิงก์ (URL)"
-                                                >
-                                                    URL
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={formData.zones}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                <div className="space-y-6">
+                                    {(formData.zones || []).map((zone, index) => (
+                                        <SortableZoneItem
+                                            key={zone.id}
+                                            id={zone.id}
+                                            zone={zone}
+                                            index={index}
+                                            updateZone={updateZone}
+                                            removeZone={removeZone}
+                                            moveZoneImageLeft={moveZoneImageLeft}
+                                            moveZoneImageRight={moveZoneImageRight}
+                                            addZoneImage={addZoneImage}
+                                            removeZoneImage={removeZoneImage}
+                                            openCloudinaryWidget={openCloudinaryWidget}
+                                        />
+                                    ))}
                                 </div>
-                            ))}
-                            {(formData.zones || []).length === 0 && (
-                                <p className="text-center text-gray-400 text-sm py-4">ยังไม่มีข้อมูลโซน กด "+ เพิ่มโซน" เพื่อเริ่มใส่ข้อมูล</p>
-                            )}
-                        </div>
+                            </SortableContext>
+                        </DndContext>
+
+                        {(formData.zones || []).length === 0 && (
+                            <p className="text-center text-gray-400 text-sm py-4">ยังไม่มีข้อมูลโซน กด "+ เพิ่มโซน" เพื่อเริ่มใส่ข้อมูล</p>
+                        )}
                     </div>
 
-                    <div className="pt-4 border-t border-gray-100">
+                    <div className="pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-20 p-4 -mx-6 -mb-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                         <button
-                            type="submit"
+                            type="button" // Changed to button type to prevent form submission if outside form (though it is inside) - wait, it should be submit.
+                            onClick={handleSubmit} // Explicitly call handleSubmit if needed, or keep type="submit"
                             disabled={formData.images.length === 0}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-md flex justify-center items-center transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >

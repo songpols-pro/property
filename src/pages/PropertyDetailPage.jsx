@@ -7,8 +7,6 @@ import Footer from '../components/Footer';
 import { MapPin, Bed, Bath, Ruler, Calendar, Map, ArrowLeft, Phone, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ZoneGallery = ({ images, name }) => {
-    const [activeIndex, setActiveIndex] = useState(0);
-
     if (!images || images.length === 0) {
         return (
             <div className="w-full h-[300px] lg:h-[400px] rounded-2xl overflow-hidden shadow-lg bg-gray-200 flex items-center justify-center">
@@ -18,43 +16,27 @@ const ZoneGallery = ({ images, name }) => {
     }
 
     return (
-        <div className="w-full h-[300px] lg:h-[400px] rounded-2xl overflow-hidden shadow-lg relative group">
-            <img
-                src={images[activeIndex]}
-                alt={`${name} - ${activeIndex + 1}`}
-                className="w-full h-full object-cover transition duration-500"
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {images.map((img, index) => {
+                // Pattern: Large (2 cols), Small (1 col), Small (1 col)
+                // Handle orphan: if last item would be a single small one, make it large
+                const isLarge = index % 3 === 0 || (index === images.length - 1 && images.length % 3 === 2);
 
-            {images.length > 1 && (
-                <>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
-                        }}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                return (
+                    <div
+                        key={index}
+                        className={`w-full rounded-2xl overflow-hidden shadow-lg group relative ${isLarge ? 'md:col-span-2 h-[300px] md:h-[500px]' : 'md:col-span-1 h-[300px]'
+                            }`}
                     >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                        {images.map((_, idx) => (
-                            <div
-                                key={idx}
-                                className={`w-2 h-2 rounded-full transition ${idx === activeIndex ? 'bg-white scale-125' : 'bg-white/50'}`}
-                            />
-                        ))}
+                        <img
+                            src={img}
+                            alt={`${name} - ${index + 1}`}
+                            className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-500" />
                     </div>
-                </>
-            )}
+                );
+            })}
         </div>
     );
 };
