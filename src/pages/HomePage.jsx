@@ -8,6 +8,7 @@ import PropertyFilter from '../components/PropertyFilter';
 import PropertyList from '../components/PropertyList';
 import Footer from '../components/Footer';
 import PropertyModal from '../components/PropertyModal';
+import PropertyMap from '../components/PropertyMap';
 import Toast from '../components/Toast';
 
 const HomePage = ({ properties, onPropertyView }) => {
@@ -17,6 +18,7 @@ const HomePage = ({ properties, onPropertyView }) => {
     const [selectedProperty, setSelectedProperty] = useState(null);
     const [toasts, setToasts] = useState([]);
     const [addressData, setAddressData] = useState([]);
+    const [showMap, setShowMap] = useState(false);
 
     // Fetch Thai Address Data
     useEffect(() => {
@@ -180,12 +182,29 @@ const HomePage = ({ properties, onPropertyView }) => {
             />
 
             <div id="listings" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <PropertyFilter
-                    currentCategory={filters.category}
-                    onSetCategory={handleSetCategory}
-                    sortBy={sortBy}
-                    onSortChange={setSortBy}
-                />
+                <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <PropertyFilter
+                        currentCategory={filters.category}
+                        onSetCategory={handleSetCategory}
+                        sortBy={sortBy}
+                        onSortChange={setSortBy}
+                    />
+                    <button
+                        onClick={() => setShowMap(!showMap)}
+                        className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${showMap ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        {/* Simple icon or text */}
+                        <span>{showMap ? 'ซ่อนแผนที่' : 'แสดงแผนที่'}</span>
+                    </button>
+                </div>
+
+                {/* Map Section */}
+                {showMap && (
+                    <div className="mb-8 animate-fade-in">
+                        <PropertyMap properties={filteredProperties} />
+                    </div>
+                )}
+
                 <PropertyList
                     properties={filteredProperties}
                     onPropertyClick={handlePropertyClick}
@@ -226,8 +245,6 @@ const HomePage = ({ properties, onPropertyView }) => {
             </div>
 
             <Footer />
-
-
 
             <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
                 {toasts.map(toast => (
