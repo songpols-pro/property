@@ -179,12 +179,20 @@ const PropertyDetailPage = () => {
 
                             {/* Action Buttons */}
                             <div className="grid grid-cols-2 gap-4 mt-auto">
-                                <button className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition shadow-lg flex items-center justify-center">
+                                <a
+                                    href="tel:0812345678"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition shadow-lg flex items-center justify-center"
+                                >
                                     <Phone className="w-5 h-5 mr-2" /> โทรติดต่อ
-                                </button>
-                                <button className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition shadow-lg flex items-center justify-center">
+                                </a>
+                                <a
+                                    href="https://line.me/ti/p/~dummylineid"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition shadow-lg flex items-center justify-center"
+                                >
                                     <MessageCircle className="w-5 h-5 mr-2" /> ไลน์สอบถาม
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
